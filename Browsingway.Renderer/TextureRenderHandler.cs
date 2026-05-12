@@ -13,36 +13,43 @@ namespace Browsingway.Renderer;
 
 internal unsafe class TextureRenderHandler : IRenderHandler
 {
-	// CEF buffers are 32-bit BGRA
 	private const byte _bytesPerPixel = 4;
 
-	// TODO: replace with lockless implementation
 	private readonly object _renderLock = new();
 
-	// TODO: remove me
-	private byte[] _alphaLookupBuffer = Array.Empty<byte>();
-	private int _alphaLookupBufferHeight;
-	private int _alphaLookupBufferWidth;
-
 	private Cursor _cursor;
-
-	// Transparent background click-through state
 	private bool _cursorOnBackground;
 
 	private ConcurrentBag<IntPtr> _obsoleteTextures = [];
 
-	private Rect _popupRect;
-	private ID3D11Texture2D* _popupTexture;
-	private bool _popupVisible;
-	private ID3D11Texture2D* _sharedTexture;
+	// CEF-provided GPU textures (opened via OpenSharedResource, held by reference)
+	private ID3D11Texture2D* _cefViewTexture;
+	private IntPtr _cefViewHandle = IntPtr.Zero;
+	private ID3D11Texture2D* _cefPopupTexture;
+	private IntPtr _cefPopupHandle = IntPtr.Zero;
 
+	// Our composited shared texture (plugin reads this)
+	private ID3D11Texture2D* _sharedTexture;
 	private IntPtr _sharedTextureHandle = IntPtr.Zero;
-	private ID3D11Texture2D* _viewTexture;
+	private int _texWidth;
+	private int _texHeight;
+
+	// Staging texture for on-demand alpha detection (1x1 px, CPU-readable)
+	private ID3D11Texture2D* _stagingTexture;
+
+	// Popup state
+	private Rect _popupRect;
+	private bool _popupVisible;
 
 	public TextureRenderHandler(Size size)
 	{
-		_sharedTexture = BuildViewTexture(size, true);
-		_viewTexture = BuildViewTexture(size, false);
+		_sharedTexture = BuildSharedTexture(size);
+		_stagingTexture = BuildStagingTexture();
+
+		D3D11_TEXTURE2D_DESC desc;
+		_sharedTexture->GetDesc(&desc);
+		_texWidth = (int)desc.Width;
+		_texHeight = (int)desc.Height;
 	}
 
 	public IntPtr SharedTextureHandle
