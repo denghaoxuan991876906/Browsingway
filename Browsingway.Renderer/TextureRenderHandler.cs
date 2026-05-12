@@ -343,9 +343,15 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 			ID3D11DeviceContext* context;
 			DxHandler.Device->GetImmediateContext(&context);
 
-			context->CopySubresourceRegion(
+			HRESULT copyHr = context->CopySubresourceRegion(
 				(ID3D11Resource*)_stagingTexture, 0, 0, 0, 0,
 				(ID3D11Resource*)_sharedTexture, 0, &srcBox);
+
+			if (copyHr.FAILED)
+			{
+				context->Release();
+				return 255;
+			}
 
 			D3D11_MAPPED_SUBRESOURCE mapped;
 			HRESULT hr = context->Map((ID3D11Resource*)_stagingTexture, 0,
