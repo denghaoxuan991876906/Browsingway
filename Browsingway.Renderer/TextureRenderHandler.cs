@@ -327,22 +327,43 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 	{
 		lock (_renderLock)
 		{
-			int rowPitch = _alphaLookupBufferWidth * _bytesPerPixel;
+			int clampX = Math.Clamp(x, 0, _texWidth - 1);
+			int clampY = Math.Clamp(y, 0, _texHeight - 1);
 
-			// Get the offset for the alpha of the cursor's current position. Bitmap buffer is BGRA, so +3 to get alpha byte
-			int cursorAlphaOffset = 0
-			                        + (Math.Min(Math.Max(x, 0), _alphaLookupBufferWidth - 1) * _bytesPerPixel)
-			                        + (Math.Min(Math.Max(y, 0), _alphaLookupBufferHeight - 1) * rowPitch)
-			                        + 3;
-			cursorAlphaOffset = cursorAlphaOffset < 0 ? 0 : cursorAlphaOffset;
-
-			if (cursorAlphaOffset < _alphaLookupBuffer.Length)
+			D3D11_BOX srcBox = new()
 			{
-				return _alphaLookupBuffer[cursorAlphaOffset];
+				left = (uint)clampX,
+				right = (uint)(clampX + 1),
+				top = (uint)clampY,
+				bottom = (uint)(clampY + 1),
+				front = 0,
+				back = 1
+			};
+
+			ID3D11DeviceContext* context;
+			DxHandler.Device->GetImmediateContext(&context);
+
+			context->CopySubresourceRegion(
+				(ID3D11Resource*)_stagingTexture, 0, 0, 0, 0,
+				(ID3D11Resource*)_sharedTexture, 0, &srcBox);
+
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			HRESULT hr = context->Map((ID3D11Resource*)_stagingTexture, 0,
+				D3D11_MAP.D3D11_MAP_READ, 0, &mapped);
+
+			byte alpha = 255;
+			if (hr.SUCCEEDED)
+			{
+				alpha = ((byte*)mapped.pData)[3];
+				context->Unmap((ID3D11Resource*)_stagingTexture, 0);
+			}
+			else
+			{
+				Console.WriteLine($"Could not map staging texture for alpha read: {hr}");
 			}
 
-			Console.WriteLine("Could not determine alpha value");
-			return 255;
+			context->Release();
+			return alpha;
 		}
 	}
 
