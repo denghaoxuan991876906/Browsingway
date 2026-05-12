@@ -183,107 +183,49 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 	public void OnAcceleratedPaint(PaintElementType type, Rect dirtyRect, AcceleratedPaintInfo acceleratedPaintInfo)
 	{
-		// TODO: use this instead of manual texture copying
-		throw new NotImplementedException();
-	}
-
-	public void OnPaint(PaintElementType type, Rect dirtyRect, IntPtr buffer, int width, int height)
-	{
 		lock (_renderLock)
 		{
-			ID3D11Texture2D* targetTexture = type switch
-			{
-				PaintElementType.View => _viewTexture,
-				PaintElementType.Popup => _popupTexture,
-				_ => throw new Exception($"Unknown paint type {type}")
-			};
+			IntPtr cefHandle = acceleratedPaintInfo.SharedTextureHandle;
 
-			if (targetTexture == null)
-			{
-				throw new Exception($"Target texture is null for paint type {type}");
-			}
-
-			// keep buffer to make alpha checks later on.
-			// TODO: make this a back and front buffer to atomic swap them
 			if (type == PaintElementType.View)
 			{
-				// check if lookup buffer is big enough
-				int requiredBufferSize = width * height * _bytesPerPixel;
-				_alphaLookupBufferWidth = width;
-				_alphaLookupBufferHeight = height;
-				if (_alphaLookupBuffer.Length < requiredBufferSize)
+				if (_cefViewHandle != cefHandle)
 				{
-					_alphaLookupBuffer = new byte[width * height * _bytesPerPixel];
+					ReleaseCefTexture(ref _cefViewTexture);
+					OpenCefTexture(cefHandle, out _cefViewTexture);
+					_cefViewHandle = cefHandle;
 				}
 
-				fixed (void* dstBuffer = _alphaLookupBuffer)
-				{
-					Buffer.MemoryCopy(buffer.ToPointer(), dstBuffer, _alphaLookupBuffer.Length, requiredBufferSize);
-				}
-			}
-
-			// Calculate offset multipliers for the current buffer
-			int rowPitch = width * _bytesPerPixel;
-			int depthPitch = rowPitch * height;
-
-			// Build the destination region for the dirty rect that we'll draw to
-			D3D11_TEXTURE2D_DESC texDesc;
-			targetTexture->GetDesc(&texDesc);
-
-			IntPtr sourceRegionPtr = buffer + (dirtyRect.X * _bytesPerPixel) + (dirtyRect.Y * rowPitch);
-			D3D11_BOX destinationBox = new()
-			{
-				top = (uint)Math.Min(dirtyRect.Y, (int)texDesc.Height),
-				bottom = (uint)Math.Min(dirtyRect.Y + dirtyRect.Height, (int)texDesc.Height),
-				left = (uint)Math.Min(dirtyRect.X, (int)texDesc.Width),
-				right = (uint)Math.Min(dirtyRect.X + dirtyRect.Width, (int)texDesc.Width),
-				front = 0,
-				back = 1
-			};
-
-			// Draw to the target
-			ID3D11DeviceContext* context;
-			DxHandler.Device->GetImmediateContext(&context);
-
-			context->UpdateSubresource(
-				(ID3D11Resource*)targetTexture,
-				0,
-				&destinationBox,
-				sourceRegionPtr.ToPointer(),
-				(uint)rowPitch,
-				(uint)depthPitch);
-
-			// composite final picture
-			// draw view layer, first
-			context->CopySubresourceRegion(
-				(ID3D11Resource*)_sharedTexture,
-				0,
-				0,
-				0,
-				0,
-				(ID3D11Resource*)_viewTexture,
-				0,
-				null);
-
-			// draw popup layer if required
-			if (_popupVisible && _popupTexture != null)
-			{
-				Point popupPos = DpiScaling.ScaleScreenPoint(_popupRect.X, _popupRect.Y);
+				ID3D11DeviceContext* context;
+				DxHandler.Device->GetImmediateContext(&context);
 				context->CopySubresourceRegion(
-					(ID3D11Resource*)_sharedTexture,
-					0,
-					(uint)popupPos.X,
-					(uint)popupPos.Y,
-					0,
-					(ID3D11Resource*)_popupTexture,
-					0,
-					null);
+					(ID3D11Resource*)_sharedTexture, 0, 0, 0, 0,
+					(ID3D11Resource*)_cefViewTexture, 0, null);
+				context->Release();
+			}
+			else if (type == PaintElementType.Popup)
+			{
+				if (_cefPopupHandle != cefHandle)
+				{
+					ReleaseCefTexture(ref _cefPopupTexture);
+					OpenCefTexture(cefHandle, out _cefPopupTexture);
+					_cefPopupHandle = cefHandle;
+				}
+
+				if (_popupVisible && _cefPopupTexture != null)
+				{
+					Point popupPos = DpiScaling.ScaleScreenPoint(_popupRect.X, _popupRect.Y);
+					ID3D11DeviceContext* context;
+					DxHandler.Device->GetImmediateContext(&context);
+					context->CopySubresourceRegion(
+						(ID3D11Resource*)_sharedTexture, 0,
+						(uint)popupPos.X, (uint)popupPos.Y, 0,
+						(ID3D11Resource*)_cefPopupTexture, 0, null);
+					context->Release();
+				}
 			}
 
-			context->Flush();
-			context->Release();
-
-			// Rendering is complete, clean up any obsolete textures
+			// Clean up any obsolete textures
 			ConcurrentBag<IntPtr> textures = _obsoleteTextures;
 			_obsoleteTextures = new ConcurrentBag<IntPtr>();
 			foreach (IntPtr texPtr in textures)
@@ -292,6 +234,7 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 			}
 		}
 	}
+
 
 	public void OnPopupShow(bool show)
 	{
