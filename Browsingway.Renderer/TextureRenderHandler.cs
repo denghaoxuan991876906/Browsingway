@@ -189,6 +189,10 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 		return new Rect(0, 0, 1, 1);
 	}
 
+	public void OnPaint(PaintElementType type, Rect dirtyRect, nint buffer, int width, int height)
+	{
+	}
+
 	public void OnAcceleratedPaint(PaintElementType type, Rect dirtyRect, AcceleratedPaintInfo acceleratedPaintInfo)
 	{
 		lock (_renderLock)
