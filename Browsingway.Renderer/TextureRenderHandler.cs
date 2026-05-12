@@ -153,11 +153,19 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 	public void Dispose()
 	{
-		_sharedTexture->Release();
-		_viewTexture->Release();
-		if (_popupTexture != null)
+		ReleaseCefTexture(ref _cefViewTexture);
+		ReleaseCefTexture(ref _cefPopupTexture);
+
+		if (_stagingTexture != null)
 		{
-			_popupTexture->Release();
+			_stagingTexture->Release();
+			_stagingTexture = null;
+		}
+
+		if (_sharedTexture != null)
+		{
+			_sharedTexture->Release();
+			_sharedTexture = null;
 		}
 
 		foreach (IntPtr texturePtr in _obsoleteTextures)
@@ -245,7 +253,6 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 	{
 		_popupRect = DpiScaling.ScaleScreenRect(rect);
 
-		// I'm really not sure if this happens. If it does, frequently - will probably need 2x shared textures and some jazz.
 		D3D11_TEXTURE2D_DESC texDesc;
 		_sharedTexture->GetDesc(&texDesc);
 		if (_popupRect.Width > texDesc.Width || _popupRect.Height > texDesc.Height)
@@ -254,16 +261,8 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 				$"Trying to build popup layer ({_popupRect.Width}x{_popupRect.Height}) larger than primary surface ({texDesc.Width}x{texDesc.Height}).");
 		}
 
-		// Get a reference to the old _sharedTexture, we'll make sure to assign a new _sharedTexture before disposing the old one.
-		ID3D11Texture2D* oldTexture = _popupTexture;
-
-		// Build a _sharedTexture for the new sized popup
-		_popupTexture = BuildViewTexture(new Size(_popupRect.Width, _popupRect.Height), false);
-
-		if (oldTexture != null)
-		{
-			oldTexture->Release();
-		}
+		ReleaseCefTexture(ref _cefPopupTexture);
+		_cefPopupHandle = IntPtr.Zero;
 	}
 
 	public ScreenInfo? GetScreenInfo()
@@ -309,16 +308,20 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 	{
 		lock (_renderLock)
 		{
-			// TODO: make this thread unsafe crap thread safe crap
-			ID3D11Texture2D* oldTexture1 = _sharedTexture;
-			ID3D11Texture2D* oldTexture2 = _viewTexture;
-			_sharedTexture = BuildViewTexture(size, true);
-			_viewTexture = BuildViewTexture(size, false);
-			_obsoleteTextures.Add((IntPtr)oldTexture1);
-			_obsoleteTextures.Add((IntPtr)oldTexture2);
+			ID3D11Texture2D* oldTexture = _sharedTexture;
+			_sharedTexture = BuildSharedTexture(size);
+			_obsoleteTextures.Add((IntPtr)oldTexture);
 
-			// Need to clear the cached handle value
-			// TODO: Maybe I should just avoid the lazy cache and do it eagerly on _sharedTexture build.
+			D3D11_TEXTURE2D_DESC desc;
+			_sharedTexture->GetDesc(&desc);
+			_texWidth = (int)desc.Width;
+			_texHeight = (int)desc.Height;
+
+			ReleaseCefTexture(ref _cefViewTexture);
+			_cefViewHandle = IntPtr.Zero;
+			ReleaseCefTexture(ref _cefPopupTexture);
+			_cefPopupHandle = IntPtr.Zero;
+
 			_sharedTextureHandle = IntPtr.Zero;
 		}
 	}
