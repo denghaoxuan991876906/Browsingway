@@ -52,6 +52,81 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 		_texHeight = (int)desc.Height;
 	}
 
+	private static ID3D11Texture2D* BuildSharedTexture(Size size)
+	{
+		D3D11_TEXTURE2D_DESC desc = new()
+		{
+			Width = (uint)size.Width,
+			Height = (uint)size.Height,
+			MipLevels = 1,
+			ArraySize = 1,
+			Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM,
+			SampleDesc = new DXGI_SAMPLE_DESC { Count = 1, Quality = 0 },
+			Usage = D3D11_USAGE.D3D11_USAGE_DEFAULT,
+			BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_SHADER_RESOURCE,
+			CPUAccessFlags = 0,
+			MiscFlags = (uint)D3D11_RESOURCE_MISC_FLAG.D3D11_RESOURCE_MISC_SHARED
+		};
+
+		ID3D11Texture2D* texture;
+		HRESULT hr = DxHandler.Device->CreateTexture2D(&desc, null, &texture);
+		if (hr.FAILED)
+		{
+			throw new Exception($"Failed to create shared texture: {hr}");
+		}
+
+		return texture;
+	}
+
+	private static ID3D11Texture2D* BuildStagingTexture()
+	{
+		D3D11_TEXTURE2D_DESC desc = new()
+		{
+			Width = 1,
+			Height = 1,
+			MipLevels = 1,
+			ArraySize = 1,
+			Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM,
+			SampleDesc = new DXGI_SAMPLE_DESC { Count = 1, Quality = 0 },
+			Usage = D3D11_USAGE.D3D11_USAGE_STAGING,
+			BindFlags = 0,
+			CPUAccessFlags = (uint)D3D11_CPU_ACCESS_FLAG.D3D11_CPU_ACCESS_READ,
+			MiscFlags = 0
+		};
+
+		ID3D11Texture2D* texture;
+		HRESULT hr = DxHandler.Device->CreateTexture2D(&desc, null, &texture);
+		if (hr.FAILED)
+		{
+			throw new Exception($"Failed to create staging texture: {hr}");
+		}
+
+		return texture;
+	}
+
+	private static void OpenCefTexture(IntPtr sharedHandle, out ID3D11Texture2D* texture)
+	{
+		ID3D11Device* device = DxHandler.Device;
+		Guid texture2DGuid = typeof(ID3D11Texture2D).GUID;
+		void* texturePtr;
+		HRESULT hr = device->OpenSharedResource((HANDLE)sharedHandle, &texture2DGuid, &texturePtr);
+		if (hr.FAILED)
+		{
+			throw new Exception($"Failed to open CEF shared texture: {hr}");
+		}
+
+		texture = (ID3D11Texture2D*)texturePtr;
+	}
+
+	private static void ReleaseCefTexture(ref ID3D11Texture2D* texture)
+	{
+		if (texture != null)
+		{
+			texture->Release();
+			texture = null;
+		}
+	}
+
 	public IntPtr SharedTextureHandle
 	{
 		get
