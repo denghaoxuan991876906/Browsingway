@@ -376,33 +376,6 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 		}
 	}
 
-	private ID3D11Texture2D* BuildViewTexture(Size size, bool isShared)
-	{
-		// Build _sharedTexture. Most of these properties are defined to match how CEF exposes the render buffer.
-		D3D11_TEXTURE2D_DESC desc = new()
-		{
-			Width = (uint)size.Width,
-			Height = (uint)size.Height,
-			MipLevels = 1,
-			ArraySize = 1,
-			Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM,
-			SampleDesc = new DXGI_SAMPLE_DESC { Count = 1, Quality = 0 },
-			Usage = D3D11_USAGE.D3D11_USAGE_DEFAULT,
-			BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_SHADER_RESOURCE,
-			CPUAccessFlags = 0,
-			MiscFlags = isShared ? (uint)D3D11_RESOURCE_MISC_FLAG.D3D11_RESOURCE_MISC_SHARED : 0
-		};
-
-		ID3D11Texture2D* texture;
-		HRESULT hr = DxHandler.Device->CreateTexture2D(&desc, null, &texture);
-		if (hr.FAILED)
-		{
-			throw new Exception($"Failed to create texture: {hr}");
-		}
-
-		return texture;
-	}
-
 	private Rect GetViewRectInternal()
 	{
 		D3D11_TEXTURE2D_DESC texDesc;
