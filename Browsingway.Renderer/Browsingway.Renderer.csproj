@@ -40,10 +40,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CefSharp.Common.NETCore" Version="143.0.90">
+		<PackageReference Include="CefSharp.Common.NETCore" Version="147.0.100">
 			<ExcludeAssets>runtime;contentFiles;native</ExcludeAssets>
 		</PackageReference>
-		<PackageReference Include="CefSharp.OffScreen.NETCore" Version="143.0.90" PrivateAssets="none">
+		<PackageReference Include="CefSharp.OffScreen.NETCore" Version="147.0.100" PrivateAssets="none">
 			<ExcludeAssets>contentFiles;native</ExcludeAssets>
 			<IncludeAssets>runtime; compile; build; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
