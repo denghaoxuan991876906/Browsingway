@@ -22,12 +22,6 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 	private ConcurrentBag<IntPtr> _obsoleteTextures = [];
 
-	// CEF-provided GPU textures (opened via OpenSharedResource, held by reference)
-	private ID3D11Texture2D* _cefViewTexture;
-	private IntPtr _cefViewHandle = IntPtr.Zero;
-	private ID3D11Texture2D* _cefPopupTexture;
-	private IntPtr _cefPopupHandle = IntPtr.Zero;
-
 	// Our composited shared texture (plugin reads this)
 	private ID3D11Texture2D* _sharedTexture;
 	private IntPtr _sharedTextureHandle = IntPtr.Zero;
@@ -153,9 +147,6 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 	public void Dispose()
 	{
-		ReleaseCefTexture(ref _cefViewTexture);
-		ReleaseCefTexture(ref _cefPopupTexture);
-
 		if (_stagingTexture != null)
 		{
 			_stagingTexture->Release();
@@ -199,42 +190,36 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 		{
 			IntPtr cefHandle = acceleratedPaintInfo.SharedTextureHandle;
 
-			if (type == PaintElementType.View)
+			// CEF manages a texture pool — handle may differ every frame.
+			// Must open and release within this callback; do NOT cache.
+			ID3D11Texture2D* cefTexture = null;
+			try
 			{
-				if (_cefViewHandle != cefHandle)
-				{
-					ReleaseCefTexture(ref _cefViewTexture);
-					OpenCefTexture(cefHandle, out _cefViewTexture);
-					_cefViewHandle = cefHandle;
-				}
+				OpenCefTexture(cefHandle, out cefTexture);
 
 				ID3D11DeviceContext* context;
 				DxHandler.Device->GetImmediateContext(&context);
-				context->CopySubresourceRegion(
-					(ID3D11Resource*)_sharedTexture, 0, 0, 0, 0,
-					(ID3D11Resource*)_cefViewTexture, 0, null);
-				context->Release();
-			}
-			else if (type == PaintElementType.Popup)
-			{
-				if (_cefPopupHandle != cefHandle)
-				{
-					ReleaseCefTexture(ref _cefPopupTexture);
-					OpenCefTexture(cefHandle, out _cefPopupTexture);
-					_cefPopupHandle = cefHandle;
-				}
 
-				if (_popupVisible && _cefPopupTexture != null)
+				if (type == PaintElementType.View)
+				{
+					context->CopySubresourceRegion(
+						(ID3D11Resource*)_sharedTexture, 0, 0, 0, 0,
+						(ID3D11Resource*)cefTexture, 0, null);
+				}
+				else if (type == PaintElementType.Popup && _popupVisible)
 				{
 					Point popupPos = DpiScaling.ScaleScreenPoint(_popupRect.X, _popupRect.Y);
-					ID3D11DeviceContext* context;
-					DxHandler.Device->GetImmediateContext(&context);
 					context->CopySubresourceRegion(
 						(ID3D11Resource*)_sharedTexture, 0,
 						(uint)popupPos.X, (uint)popupPos.Y, 0,
-						(ID3D11Resource*)_cefPopupTexture, 0, null);
-					context->Release();
+						(ID3D11Resource*)cefTexture, 0, null);
 				}
+
+				context->Release();
+			}
+			finally
+			{
+				if (cefTexture != null) cefTexture->Release();
 			}
 
 			// Clean up any obsolete textures
@@ -264,9 +249,6 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 			Console.Error.WriteLine(
 				$"Trying to build popup layer ({_popupRect.Width}x{_popupRect.Height}) larger than primary surface ({texDesc.Width}x{texDesc.Height}).");
 		}
-
-		ReleaseCefTexture(ref _cefPopupTexture);
-		_cefPopupHandle = IntPtr.Zero;
 	}
 
 	public ScreenInfo? GetScreenInfo()
@@ -320,12 +302,6 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 			_sharedTexture->GetDesc(&desc);
 			_texWidth = (int)desc.Width;
 			_texHeight = (int)desc.Height;
-
-			ReleaseCefTexture(ref _cefViewTexture);
-			_cefViewHandle = IntPtr.Zero;
-			ReleaseCefTexture(ref _cefPopupTexture);
-			_cefPopupHandle = IntPtr.Zero;
-
 			_sharedTextureHandle = IntPtr.Zero;
 		}
 	}

@@ -60,7 +60,8 @@ internal class Overlay : IDisposable
 
 		// General _browser config
 		WindowInfo windowInfo = new() {Width = size.Width, Height = size.Height};
-		windowInfo.SetAsWindowless(IntPtr.Zero, true);
+		windowInfo.SetAsWindowless(IntPtr.Zero);
+		windowInfo.SharedTextureEnabled = true;
 
 		// WindowInfo gets ignored sometimes, be super sure:
 		_browser.BrowserInitialized += (_, _) =>
