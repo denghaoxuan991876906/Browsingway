@@ -15,6 +15,7 @@ internal class Overlay : IDisposable
 	private bool _captureCursor;
 	private ImGuiMouseCursor _cursor;
 	private bool _isTextInput;
+	private Vector2? _position;
 
 	private bool _mouseInWindow;
 
@@ -42,6 +43,13 @@ internal class Overlay : IDisposable
 	}
 
 	public Guid RenderGuid => _overlayConfig.Guid;
+
+	public string Name => _overlayConfig.Name;
+
+	public void SetPosition(int? x, int? y)
+	{
+		_position = x.HasValue && y.HasValue ? new Vector2(x.Value, y.Value) : null;
+	}
 
 	public void Dispose()
 	{
@@ -124,6 +132,9 @@ internal class Overlay : IDisposable
 
 		ImGui.SetNextWindowSize(new Vector2(640, 480), ImGuiCond.FirstUseEver);
 		ImGui.Begin($"{_overlayConfig.Name}###{_overlayConfig.Guid}", GetWindowFlags());
+
+		if (_position.HasValue)
+			ImGui.SetWindowPos(_position.Value, ImGuiCond.Always);
 
 		if (_overlayConfig.Fullscreen)
 		{
