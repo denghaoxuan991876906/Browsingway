@@ -3,7 +3,7 @@
     "Author": "Styr1x, 嗨呀",
     "Name": "Browsingway",
     "InternalName": "Browsingway",
-    "AssemblyVersion": "1.7.2.0",
+    "AssemblyVersion": "1.7.3.0",
     "Punchline": "GPU-accelerated browser overlays in-game, with external IPC API.",
     "Description": "GPU-accelerated browser overlays with external IPC API for plugin control (HiAuRo). Based on BrowserHost by ackwell.",
     "ApplicableVersion": "any",
@@ -22,9 +22,9 @@
     "LoadPriority": 0,
     "IsHide": "False",
     "IsTestingExclusive": "False",
-    "LastUpdated": "1768297200",
-    "DownloadLinkInstall": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.2.0/Browsingway-latest.zip",
-    "DownloadLinkTesting": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.2.0/Browsingway-latest.zip",
-    "DownloadLinkUpdate": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.2.0/Browsingway-latest.zip"
+    "LastUpdated": "1768317600",
+    "DownloadLinkInstall": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.3.0/Browsingway-latest.zip",
+    "DownloadLinkTesting": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.3.0/Browsingway-latest.zip",
+    "DownloadLinkUpdate": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.3.0/Browsingway-latest.zip"
   }
 ]

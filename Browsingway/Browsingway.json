@@ -16,5 +16,5 @@
         "website",
         "video"
     ],
-    "Changelog": "- GPU-accelerated rendering (OnAcceleratedPaint)\n- External IPC API for plugin control\n- XIVLauncherCN support\n"
+    "Changelog": "- GPU-accelerated rendering (OnAcceleratedPaint)\n- External IPC API for plugin control\n- HiAuRo auto-sync on startup\n- XIVLauncherCN support\n"
 }
