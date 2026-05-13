@@ -1,7 +1,7 @@
 ﻿{
     "InternalName": "Browsingway",
     "Name": "Browsingway",
-    "Author": "Styr1x, denghaoxuan991876906",
+    "Author": "Styr1x, 嗨呀",
     "Punchline": "GPU-accelerated browser overlays in-game, with external IPC API.",
     "Description": "Renders browser overlays in-game with GPU-accelerated texture sharing (OnAcceleratedPaint).\nSupports external plugin control via Dalamud IPC (HiAuRo integration).\nBased on BrowserHost by ackwell.",
     "RepoUrl": "https://github.com/denghaoxuan991876906/Browsingway",
