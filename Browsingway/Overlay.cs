@@ -163,6 +163,12 @@ internal class Overlay : IDisposable
 
 		HandleWindowSize();
 
+		if (_refreshCount > 0)
+		{
+			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, _overlayConfig.Width), Math.Max(1, _overlayConfig.Height));
+			_refreshCount--;
+		}
+
 		// TODO: Browsingway.Renderer can take some time to spin up properly, should add a loading state.
 		if (_textureHandler != null && !_hasRenderError)
 		{
@@ -345,12 +351,6 @@ internal class Overlay : IDisposable
 		else
 		{
 			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, (int)currentSize.X), Math.Max(1, (int)currentSize.Y));
-		}
-
-		if (_refreshCount > 0)
-		{
-			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, _overlayConfig.Width), Math.Max(1, _overlayConfig.Height));
-			_refreshCount--;
 		}
 
 		_resizing = true;
