@@ -1,0 +1,30 @@
+[
+  {
+    "Author": "Styr1x, denghaoxuan991876906",
+    "Name": "Browsingway",
+    "InternalName": "Browsingway",
+    "AssemblyVersion": "1.7.2.0",
+    "Punchline": "GPU-accelerated browser overlays in-game, with external IPC API.",
+    "Description": "GPU-accelerated browser overlays with external IPC API for plugin control (HiAuRo). Based on BrowserHost by ackwell.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/denghaoxuan991876906/Browsingway",
+    "Tags": [
+      "browser",
+      "overlay",
+      "chromium",
+      "cef",
+      "webui"
+    ],
+    "DalamudApiLevel": 15,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "IsHide": "False",
+    "IsTestingExclusive": "False",
+    "LastUpdated": "1768297200",
+    "DownloadLinkInstall": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.2.0/Browsingway-latest.zip",
+    "DownloadLinkTesting": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.2.0/Browsingway-latest.zip",
+    "DownloadLinkUpdate": "https://github.com/denghaoxuan991876906/Browsingway/releases/download/v1.7.2.0/Browsingway-latest.zip"
+  }
+]
