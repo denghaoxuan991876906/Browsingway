@@ -18,6 +18,7 @@ internal class Overlay : IDisposable
 	private Vector2? _position;
 
 	private bool _mouseInWindow;
+	private bool _wasVisible = true;
 
 	private bool _resizing;
 	private Vector2 _size;
@@ -127,11 +128,22 @@ internal class Overlay : IDisposable
 		    (_overlayConfig.HideInPvP && Services.ClientState.IsPvP))
 		{
 			_mouseInWindow = false;
+			_wasVisible = false;
 			return;
 		}
 
+		bool justShown = !_wasVisible;
+		_wasVisible = true;
+
 		ImGui.SetNextWindowSize(new Vector2(_overlayConfig.Width, _overlayConfig.Height));
 		ImGui.Begin($"{_overlayConfig.Name}###{_overlayConfig.Guid}", GetWindowFlags());
+
+		if (justShown)
+		{
+			ImGui.SetWindowSize(new Vector2(_overlayConfig.Width, _overlayConfig.Height), ImGuiCond.Always);
+			_size = Vector2.Zero; // force HandleWindowSize to re-create overlay
+			_hasRenderError = false;
+		}
 
 		if (_position.HasValue)
 			ImGui.SetWindowPos(_position.Value, ImGuiCond.Always);
