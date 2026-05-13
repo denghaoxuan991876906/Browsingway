@@ -54,9 +54,11 @@ internal class Overlay : IDisposable
 	public void Refresh()
 	{
 		if (_renderProcess.Rpc == null) return;
-		int w = Math.Max(1, _overlayConfig.Width);
-		int h = Math.Max(1, _overlayConfig.Height);
-		_ = _renderProcess.Rpc.ResizeOverlay(RenderGuid, w, h);
+		// Invalidate current texture so render skips until new one arrives
+		_textureHandler?.Dispose();
+		_textureHandler = null;
+		_size = Vector2.Zero;
+		_hasRenderError = false;
 	}
 
 	public void Dispose()
