@@ -15,6 +15,7 @@ internal class Settings : IDisposable
 	public event EventHandler<InlayConfiguration>? OverlayZoomed;
 	public event EventHandler<InlayConfiguration>? OverlayMuted;
 	public event EventHandler<InlayConfiguration>? OverlayUserCssChanged;
+	public event EventHandler<InlayConfiguration>? OverlaySettingsChanged;
 	public readonly Configuration Config;
 	private bool _actAvailable = false;
 
@@ -549,6 +550,7 @@ internal class Settings : IDisposable
 
 		ImGui.PopID();
 
+		if (dirty) { OverlaySettingsChanged?.Invoke(this, overlayConfig); }
 		return dirty;
 	}
 }

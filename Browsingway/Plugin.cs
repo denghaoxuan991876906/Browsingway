@@ -137,6 +137,10 @@ public class Plugin : IDalamudPlugin
 			_settings.OverlayMuted += OnOverlayMuted;
 			_actHandler.AvailabilityChanged += OnActAvailabilityChanged;
 			_settings.OverlayUserCssChanged += OnUserCssChanged;
+			_settings.OverlaySettingsChanged += (_, config) =>
+			{
+				if (_overlays.TryGetValue(config.Guid, out var ov)) ov.Refresh();
+			};
 		}
 
 		// Hook up the main BW command
@@ -192,8 +196,9 @@ public class Plugin : IDalamudPlugin
 			if (_settings != null)
 				Services.PluginInterface.SavePluginConfig(_settings.Config);
 
-			_settings?.HydrateOverlays();
-			_ = _renderProcess?.Rpc?.ResizeOverlay(existing.Guid, args.Width, args.Height);
+		_settings?.HydrateOverlays();
+		_ = _renderProcess?.Rpc?.ResizeOverlay(existing.Guid, args.Width, args.Height);
+		if (_overlays.TryGetValue(existing.Guid, out var ov)) ov.Refresh();
 		});
 
 		// Browsingway.Overlay.SetVisibility
@@ -201,11 +206,12 @@ public class Plugin : IDalamudPlugin
 		{
 			InlayConfiguration? cfg = _settings?.Config.Inlays.Find(o => o.Name == args.Name);
 			if (cfg != null)
-			{
-				cfg.Hidden = !args.Visible;
-				if (_settings != null)
-					Services.PluginInterface.SavePluginConfig(_settings.Config);
-			}
+		{
+			cfg.Hidden = !args.Visible;
+			if (_settings != null)
+				Services.PluginInterface.SavePluginConfig(_settings.Config);
+			if (_overlays.TryGetValue(cfg.Guid, out var ov)) ov.Refresh();
+		}
 		});
 
 		// Browsingway.Overlay.SetPosition
