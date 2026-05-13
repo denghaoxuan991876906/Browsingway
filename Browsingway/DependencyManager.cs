@@ -41,9 +41,9 @@ public class DependencyManager : IDisposable
 
 	private static readonly Dependency[] _dependencies =
 	{
-		new("https://ghproxy.com/https://github.com/Styr1x/Browsingway/releases/download/cef-binaries/cefsharp-{VERSION}.zip", "cef",
-			"143.0.9+ge88e818+chromium-143.0.7499.40",
-			"2911B142BE2B9F8555FD7A2FF28B47ADFFF531D4E509BD8E0020FA0771DADAA4")
+		new("https://ghproxy.com/https://github.com/denghaoxuan991876906/Browsingway/releases/download/cef-binaries/cefsharp-{VERSION}.zip", "cef",
+			"147.0.10+gd58e84d+chromium-147.0.7727.118",
+			"EF052F3814695FF40E0FDD744F0D87305948807B40EC2AF095BCAC3A5240E7B9")
 	};
 
 	private readonly string _debugCheckDir;
