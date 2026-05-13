@@ -184,6 +184,9 @@ public class DependencyManager : IDisposable
 
 		ZipFile.ExtractToDirectory(filePath, destinationDir);
 
+		// Write version file so dependency checks pass on subsequent loads
+		File.WriteAllText(Path.Combine(destinationDir, "VERSION"), dependency.Version);
+
 		// Clear out the downloaded file now we're done with it
 		File.Delete(filePath);
 	}
