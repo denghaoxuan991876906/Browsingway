@@ -100,10 +100,14 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 	private static void OpenCefTexture(IntPtr sharedHandle, out ID3D11Texture2D* texture)
 	{
+		// CEF passes a pointer to the HANDLE, not the HANDLE itself
+		void* handlePtr = sharedHandle.ToPointer();
+		HANDLE actualHandle = *(HANDLE*)handlePtr;
+
 		ID3D11Device* device = DxHandler.Device;
 		Guid texture2DGuid = typeof(ID3D11Texture2D).GUID;
 		void* texturePtr;
-		HRESULT hr = device->OpenSharedResource((HANDLE)sharedHandle, &texture2DGuid, &texturePtr);
+		HRESULT hr = device->OpenSharedResource(actualHandle, &texture2DGuid, &texturePtr);
 		if (hr.FAILED)
 		{
 			throw new Exception($"Failed to open CEF shared texture: {hr}");
