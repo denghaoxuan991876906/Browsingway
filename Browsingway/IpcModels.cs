@@ -1,5 +1,7 @@
 namespace Browsingway;
 
+#pragma warning disable CS0649 // Fields assigned by Dalamud IPC deserialization
+
 internal struct CreateOrUpdateArgs
 {
 	public string Name;

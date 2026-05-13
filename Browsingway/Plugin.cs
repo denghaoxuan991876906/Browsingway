@@ -152,7 +152,9 @@ public class Plugin : IDalamudPlugin
 
 		// Browsingway.IsReady
 		ipc.GetIpcProvider<bool>("Browsingway.IsReady").RegisterFunc(() =>
-			_renderProcess?.Rpc != null && DxHandler.Device != null);
+		{
+			unsafe { return _renderProcess?.Rpc != null && DxHandler.Device != null; }
+		});
 
 		// Browsingway.Overlay.Exists
 		ipc.GetIpcProvider<string, bool>("Browsingway.Overlay.Exists").RegisterFunc(name =>
