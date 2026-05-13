@@ -18,6 +18,7 @@ internal class Overlay : IDisposable
 	private Vector2? _position;
 
 	private bool _mouseInWindow;
+	private long _refreshUntil;
 
 	private bool _resizing;
 	private Vector2 _size;
@@ -53,12 +54,7 @@ internal class Overlay : IDisposable
 
 	public void Refresh()
 	{
-		if (_renderProcess.Rpc == null) return;
-		// Invalidate current texture so render skips until new one arrives
-		_textureHandler?.Dispose();
-		_textureHandler = null;
-		_size = Vector2.Zero;
-		_hasRenderError = false;
+		_refreshUntil = DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000;
 	}
 
 	public void Dispose()
@@ -349,6 +345,12 @@ internal class Overlay : IDisposable
 		else
 		{
 			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, (int)currentSize.X), Math.Max(1, (int)currentSize.Y));
+		}
+
+		if (DateTimeOffset.Now.ToUnixTimeMilliseconds() < _refreshUntil)
+		{
+			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, _overlayConfig.Width), Math.Max(1, _overlayConfig.Height));
+			_resizing = true;
 		}
 
 		_resizing = true;
