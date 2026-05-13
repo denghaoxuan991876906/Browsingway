@@ -246,16 +246,23 @@ internal class Overlay : IDisposable
 	public void SetTexture(IntPtr handle)
 	{
 		_resizing = false;
-		_hasRenderError = false;
 
 		SharedTextureHandler? oldTextureHandler = _textureHandler;
 		try
 		{
 			_textureHandler = new SharedTextureHandler(handle);
+			_hasRenderError = false;
 		}
-		catch (Exception e) { _textureRenderException = e; }
+		catch (Exception e)
+		{
+			_textureRenderException = e;
+			_hasRenderError = true;
+		}
 
-		if (oldTextureHandler != null) { oldTextureHandler.Dispose(); }
+		// Dispose old handler on next framework tick to avoid D3D11 crash
+		// if ImGui is still referencing the old texture mid-draw
+		if (oldTextureHandler != null)
+			Services.Framework.RunOnFrameworkThread(() => oldTextureHandler.Dispose());
 	}
 
 	private void HandleMouseEvent()
