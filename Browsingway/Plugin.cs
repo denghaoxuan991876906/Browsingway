@@ -8,6 +8,7 @@ using Dalamud.Bindings.ImGui;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
+using System.Text.Json;
 
 namespace Browsingway;
 
@@ -97,6 +98,7 @@ public class Plugin : IDalamudPlugin
 				{
 					_settings.HydrateOverlays();
 				}
+				SyncFromHiAuRo();
 			});
 		};
 		_renderProcess.Rpc.SetCursor += msg =>
@@ -143,11 +145,72 @@ public class Plugin : IDalamudPlugin
 			};
 		}
 
+		RegisterIpc();
+
+		SyncFromHiAuRo();
+
 		// Hook up the main BW command
 		Services.CommandManager.AddHandler(_command,
 			new CommandInfo(HandleCommand) {HelpMessage = "Control Browsingway from the chat line! Type '/bw config' or open the settings for more info.", ShowInHelp = true});
 
 		RegisterIpc();
+	}
+
+	private void SyncFromHiAuRo()
+	{
+		try
+		{
+			var ipc = Services.PluginInterface;
+			var isWebUiSub = ipc.GetIpcSubscriber<bool>("HiAuRo.IsWebUIMode");
+			bool isWebUi = isWebUiSub.InvokeFunc();
+			if (!isWebUi) return;
+
+			var overlaysJson = ipc.GetIpcSubscriber<string>("HiAuRo.GetOverlaysJson").InvokeFunc();
+			if (string.IsNullOrEmpty(overlaysJson)) return;
+
+			using var doc = JsonDocument.Parse(overlaysJson);
+			foreach (var item in doc.RootElement.EnumerateArray())
+			{
+				string name = item.GetProperty("name").GetString()!;
+				string url  = item.GetProperty("url").GetString()!;
+				int w       = item.GetProperty("width").GetInt32();
+				int h       = item.GetProperty("height").GetInt32();
+				float zoom  = item.GetProperty("zoom").GetSingle();
+				bool locked = item.GetProperty("locked").GetBoolean();
+
+				var existing = _settings?.Config.Inlays.Find(o => o.Name == name);
+				if (existing == null)
+				{
+					existing = new InlayConfiguration
+					{
+						Guid = Guid.NewGuid(),
+						Name = name,
+						Url = url,
+						Width = w,
+						Height = h,
+						Zoom = zoom,
+						Locked = locked,
+						Framerate = 30,
+						Hidden = false
+					};
+					_settings?.Config.Inlays.Add(existing);
+				}
+				else
+				{
+					existing.Url = url;
+					existing.Width = w;
+					existing.Height = h;
+					existing.Zoom = zoom;
+					existing.Locked = locked;
+					existing.Hidden = false;
+				}
+			}
+
+			if (_settings != null)
+				Services.PluginInterface.SavePluginConfig(_settings.Config);
+			_settings?.HydrateOverlays();
+		}
+		catch { /* HiAuRo IPC not available — silently skip */ }
 	}
 
 	private void RegisterIpc()
