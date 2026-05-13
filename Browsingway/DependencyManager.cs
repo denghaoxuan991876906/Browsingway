@@ -43,7 +43,7 @@ public class DependencyManager : IDisposable
 	{
 		new("https://github.com/denghaoxuan991876906/Browsingway/releases/download/cef-binaries/cefsharp-{VERSION}.zip", "cef",
 			"147.0.10+gd58e84d+chromium-147.0.7727.118",
-			"EF052F3814695FF40E0FDD744F0D87305948807B40EC2AF095BCAC3A5240E7B9")
+			"F9997B9BFA927FFA75023EE3AA11273E4FC0318A54609346CC48238D60CBCA04")
 	};
 
 	private readonly string _debugCheckDir;
