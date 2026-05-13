@@ -31,4 +31,6 @@ internal class InlayConfiguration
 	public bool HideOutOfCombat;
 	public bool HideInPvP;
 	public int HideDelay = 0;
+	public int Width = 640;
+	public int Height = 480;
 }

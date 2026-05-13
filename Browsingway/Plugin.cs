@@ -174,7 +174,9 @@ public class Plugin : IDalamudPlugin
 					Zoom = args.Zoom,
 					Locked = args.Locked,
 					Framerate = 30,
-					Hidden = true
+					Hidden = true,
+					Width = args.Width,
+					Height = args.Height
 				};
 				_settings?.Config.Inlays.Add(existing);
 			}
@@ -183,6 +185,8 @@ public class Plugin : IDalamudPlugin
 				existing.Url = args.Url;
 				existing.Zoom = args.Zoom;
 				existing.Locked = args.Locked;
+				existing.Width = args.Width;
+				existing.Height = args.Height;
 			}
 
 			if (_settings != null)

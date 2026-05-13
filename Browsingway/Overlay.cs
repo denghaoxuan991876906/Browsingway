@@ -130,7 +130,7 @@ internal class Overlay : IDisposable
 			return;
 		}
 
-		ImGui.SetNextWindowSize(new Vector2(640, 480), ImGuiCond.FirstUseEver);
+		ImGui.SetNextWindowSize(new Vector2(_overlayConfig.Width, _overlayConfig.Height));
 		ImGui.Begin($"{_overlayConfig.Name}###{_overlayConfig.Guid}", GetWindowFlags());
 
 		if (_position.HasValue)
@@ -328,8 +328,8 @@ internal class Overlay : IDisposable
 				Guid = RenderGuid.ToByteArray(),
 				Id = _overlayConfig.Name,
 				Url = _overlayConfig.Url,
-				Width = (int)currentSize.X,
-				Height = (int)currentSize.Y,
+				Width = _overlayConfig.Width,
+				Height = _overlayConfig.Height,
 				Zoom = _overlayConfig.Zoom,
 				Framerate = _overlayConfig.Framerate,
 				Muted = _overlayConfig.Muted,
