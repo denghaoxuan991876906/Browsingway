@@ -16,7 +16,8 @@ internal class Overlay : IDisposable
 	private readonly int _framerate;
 	public readonly TextureRenderHandler RenderHandler;
 	private ChromiumWebBrowser? _browser;
-	private Timer? _paintWatchTimer;
+		private Timer? _paintWatchTimer;
+	private long _browserCreatedTime;
 	private string _url;
 	private float _zoom;
 	private bool _muted;
@@ -84,18 +85,18 @@ internal class Overlay : IDisposable
 
 		// Ready, boot up the _browser
 		_browser.CreateBrowser(windowInfo, browserSettings);
+		_browserCreatedTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
 		browserSettings.Dispose();
 		windowInfo.Dispose();
 
 		_paintWatchTimer = new Timer(_ =>
 		{
-			long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-			long since = now - RenderHandler.LastPaintTime;
-			if (since > 5000)
+			// Only reload if page never painted and browser is >5s old
+			if (!RenderHandler.HasPainted &&
+			    DateTimeOffset.Now.ToUnixTimeMilliseconds() - _browserCreatedTime > 5000)
 			{
-				Console.WriteLine($"[PaintWatch] {_id}: no paint for {since}ms, reloading");
-				RenderHandler.ResetPaintTime();
+				Console.WriteLine($"[PaintWatch] {_id}: never painted after 5s, reloading");
 				_browser?.Reload();
 			}
 		}, null, 2000, 2000);

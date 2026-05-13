@@ -15,7 +15,9 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 	private const byte _bytesPerPixel = 4;
 
 	private long _lastPaintTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+	private bool _hasPainted;
 	public long LastPaintTime => _lastPaintTime;
+	public bool HasPainted => _hasPainted;
 
 	public void ResetPaintTime()
 	{
@@ -89,6 +91,7 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 	public void OnAcceleratedPaint(PaintElementType type, Rect dirtyRect, AcceleratedPaintInfo info)
 	{
 		_lastPaintTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		_hasPainted = true;
 		lock (_lock)
 		{
 		ID3D11DeviceContext* context;
@@ -125,6 +128,7 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 	public void OnPaint(PaintElementType type, Rect dirtyRect, IntPtr buffer, int width, int height)
 	{
 		_lastPaintTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		_hasPainted = true;
 		lock (_lock)
 		{
 		ID3D11Texture2D* targetTexture = type switch
