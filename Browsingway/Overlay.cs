@@ -319,7 +319,7 @@ internal class Overlay : IDisposable
 	private void HandleWindowSize()
 	{
 		Vector2 currentSize = ImGui.GetWindowContentRegionMax() - ImGui.GetWindowContentRegionMin();
-		if (currentSize == _size || _resizing) { return; }
+		if (currentSize.X <= 0 || currentSize.Y <= 0 || currentSize == _size || _resizing) { return; }
 
 		if (_size == Vector2.Zero)
 		{
@@ -338,7 +338,7 @@ internal class Overlay : IDisposable
 		}
 		else
 		{
-			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, (int)currentSize.X, (int)currentSize.Y);
+			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, (int)currentSize.X), Math.Max(1, (int)currentSize.Y));
 		}
 
 		_resizing = true;
