@@ -18,6 +18,7 @@ internal class Overlay : IDisposable
 	private Vector2? _position;
 
 	private bool _mouseInWindow;
+	private Timer? _reloadTimer;
 
 	private bool _resizing;
 	private Vector2 _size;
@@ -53,12 +54,17 @@ internal class Overlay : IDisposable
 
 	public void Reload()
 	{
-		_ = _renderProcess.Rpc?.Navigate(RenderGuid, _overlayConfig.Url);
+		_reloadTimer?.Dispose();
+		_reloadTimer = new Timer(_ =>
+		{
+			_ = _renderProcess.Rpc?.Navigate(RenderGuid, _overlayConfig.Url);
+		}, null, 500, Timeout.Infinite);
 	}
 
 	public void Dispose()
 	{
 		_textureHandler?.Dispose();
+		_reloadTimer?.Dispose();
 		_ = _renderProcess.Rpc?.RemoveOverlay(RenderGuid);
 	}
 
