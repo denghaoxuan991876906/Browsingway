@@ -17,6 +17,7 @@ internal class Overlay : IDisposable
 	public readonly TextureRenderHandler RenderHandler;
 	private ChromiumWebBrowser? _browser;
 	private Timer? _paintWatchTimer;
+	private long _lastWatchdogReload;
 	private string _url;
 	private float _zoom;
 	private bool _muted;
@@ -92,9 +93,11 @@ internal class Overlay : IDisposable
 		{
 			long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 			long since = now - RenderHandler.LastPaintTime;
-			if (since > 5000)
+			long sinceLastReload = now - _lastWatchdogReload;
+			if (since > 5000 && sinceLastReload > 15000)
 			{
 				Console.WriteLine($"[PaintWatch] {_id}: no paint for {since}ms, reloading");
+				_lastWatchdogReload = now;
 				RenderHandler.ResetPaintTime();
 				_browser?.Reload();
 			}
