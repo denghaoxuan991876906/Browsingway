@@ -142,6 +142,72 @@ public class Plugin : IDalamudPlugin
 		// Hook up the main BW command
 		Services.CommandManager.AddHandler(_command,
 			new CommandInfo(HandleCommand) {HelpMessage = "Control Browsingway from the chat line! Type '/bw config' or open the settings for more info.", ShowInHelp = true});
+
+		RegisterIpc();
+	}
+
+	private void RegisterIpc()
+	{
+		var ipc = Services.PluginInterface;
+
+		// Browsingway.IsReady
+		ipc.GetIpcProvider<bool>("Browsingway.IsReady").RegisterFunc(() =>
+			_renderProcess?.Rpc != null && DxHandler.Device != null);
+
+		// Browsingway.Overlay.Exists
+		ipc.GetIpcProvider<string, bool>("Browsingway.Overlay.Exists").RegisterFunc(name =>
+			_overlays.Values.Any(o => o.Name == name));
+
+		// Browsingway.Overlay.CreateOrUpdate
+		ipc.GetIpcProvider<CreateOrUpdateArgs, object>("Browsingway.Overlay.CreateOrUpdate").RegisterAction(args =>
+		{
+			InlayConfiguration? existing = _settings?.Config.Inlays.Find(o => o.Name == args.Name);
+			if (existing == null)
+			{
+				existing = new InlayConfiguration
+				{
+					Guid = Guid.NewGuid(),
+					Name = args.Name,
+					Url = args.Url,
+					Zoom = args.Zoom,
+					Locked = args.Locked,
+					Framerate = 30,
+					Hidden = true
+				};
+				_settings?.Config.Inlays.Add(existing);
+			}
+			else
+			{
+				existing.Url = args.Url;
+				existing.Zoom = args.Zoom;
+				existing.Locked = args.Locked;
+			}
+
+			if (_settings != null)
+				Services.PluginInterface.SavePluginConfig(_settings.Config);
+
+			_settings?.HydrateOverlays();
+			_ = _renderProcess?.Rpc?.ResizeOverlay(existing.Guid, args.Width, args.Height);
+		});
+
+		// Browsingway.Overlay.SetVisibility
+		ipc.GetIpcProvider<SetVisibilityArgs, object>("Browsingway.Overlay.SetVisibility").RegisterAction(args =>
+		{
+			InlayConfiguration? cfg = _settings?.Config.Inlays.Find(o => o.Name == args.Name);
+			if (cfg != null)
+			{
+				cfg.Hidden = !args.Visible;
+				if (_settings != null)
+					Services.PluginInterface.SavePluginConfig(_settings.Config);
+			}
+		});
+
+		// Browsingway.Overlay.SetPosition
+		ipc.GetIpcProvider<SetPositionArgs, object>("Browsingway.Overlay.SetPosition").RegisterAction(args =>
+		{
+			Overlay? overlay = _overlays.Values.FirstOrDefault(o => o.Name == args.Name);
+			overlay?.SetPosition(args.X, args.Y);
+		});
 	}
 
 	private (bool, long) OnWndProc(WindowsMessage msg, ulong wParam, long lParam)
