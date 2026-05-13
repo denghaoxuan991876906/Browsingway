@@ -28,6 +28,7 @@ internal static class CefHandler
 		}
 
 		settings.EnableAudio();
+		settings.SetOffScreenRenderingBestPerformanceArgs();
 		settings.UserAgentProduct = $"Chrome/{Cef.ChromiumVersion} Browsingway/{Assembly.GetEntryAssembly()?.GetName().Version} (ffxiv_pid {parentPid}; renderer_pid {Environment.ProcessId})";
 
 		Cef.Initialize(settings, false, browserProcessHandler: null);
