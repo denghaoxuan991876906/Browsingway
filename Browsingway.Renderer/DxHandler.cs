@@ -73,6 +73,25 @@ internal static unsafe class DxHandler
 			null,
 			&context);
 
+#if DEBUG
+		// DXGI_ERROR_SDK_COMPONENT_MISSING — retry without debug layer
+		if (hr == DXGI.DXGI_ERROR_SDK_COMPONENT_MISSING)
+		{
+			flags &= ~D3D11_CREATE_DEVICE_DEBUG;
+			hr = D3D11CreateDevice(
+				gameAdapter,
+				D3D_DRIVER_TYPE_UNKNOWN,
+				HMODULE.NULL,
+				(uint)flags,
+				null,
+				0,
+				D3D11.D3D11_SDK_VERSION,
+				&device,
+				null,
+				&context);
+		}
+#endif
+
 		gameAdapter->Release();
 		factory->Release();
 
