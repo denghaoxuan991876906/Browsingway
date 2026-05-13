@@ -54,7 +54,7 @@ internal class Overlay : IDisposable
 
 	public void Refresh()
 	{
-		_refreshCount = 10;
+		_refreshCount = 30;
 	}
 
 	public void Dispose()
