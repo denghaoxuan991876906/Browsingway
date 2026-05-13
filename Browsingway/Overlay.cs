@@ -18,7 +18,7 @@ internal class Overlay : IDisposable
 	private Vector2? _position;
 
 	private bool _mouseInWindow;
-	private long _refreshUntil;
+	private int _refreshCount;
 
 	private bool _resizing;
 	private Vector2 _size;
@@ -54,7 +54,7 @@ internal class Overlay : IDisposable
 
 	public void Refresh()
 	{
-		_refreshUntil = DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000;
+		_refreshCount = 10;
 	}
 
 	public void Dispose()
@@ -347,10 +347,10 @@ internal class Overlay : IDisposable
 			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, (int)currentSize.X), Math.Max(1, (int)currentSize.Y));
 		}
 
-		if (DateTimeOffset.Now.ToUnixTimeMilliseconds() < _refreshUntil)
+		if (_refreshCount > 0)
 		{
 			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, _overlayConfig.Width), Math.Max(1, _overlayConfig.Height));
-			_resizing = true;
+			_refreshCount--;
 		}
 
 		_resizing = true;
