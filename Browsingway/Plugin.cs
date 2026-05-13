@@ -283,6 +283,27 @@ public class Plugin : IDalamudPlugin
 			Overlay? overlay = _overlays.Values.FirstOrDefault(o => o.Name == args.Name);
 			overlay?.SetPosition(args.X, args.Y);
 		});
+
+		// Browsingway.Overlay.SetDisabled
+		ipc.GetIpcProvider<SetDisabledArgs, object>("Browsingway.Overlay.SetDisabled").RegisterAction(args =>
+		{
+			InlayConfiguration? cfg = _settings?.Config.Inlays.Find(o => o.Name == args.Name);
+			if (cfg == null) return;
+			cfg.Disabled = args.Disabled;
+			if (_settings != null)
+				Services.PluginInterface.SavePluginConfig(_settings.Config);
+			// Disable: 销毁 CEF，移除 overlay
+			// Enable:  重新创建 overlay
+			if (args.Disabled)
+			{
+				if (_overlays.Remove(cfg.Guid, out var ov))
+					ov.Dispose();
+			}
+			else
+			{
+				_settings?.HydrateOverlays();
+			}
+		});
 	}
 
 	private (bool, long) OnWndProc(WindowsMessage msg, ulong wParam, long lParam)

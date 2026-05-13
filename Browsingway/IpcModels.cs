@@ -24,3 +24,9 @@ internal struct SetPositionArgs
 	public int? X;
 	public int? Y;
 }
+
+internal struct SetDisabledArgs
+{
+	public string Name;
+	public bool Disabled;
+}

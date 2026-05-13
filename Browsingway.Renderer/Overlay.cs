@@ -16,6 +16,7 @@ internal class Overlay : IDisposable
 	private readonly int _framerate;
 	public readonly TextureRenderHandler RenderHandler;
 	private ChromiumWebBrowser? _browser;
+	private Timer? _paintWatchTimer;
 	private string _url;
 	private float _zoom;
 	private bool _muted;
@@ -35,6 +36,7 @@ internal class Overlay : IDisposable
 
 	public void Dispose()
 	{
+		_paintWatchTimer?.Dispose();
 		RenderHandler.Dispose();
 
 		if (_browser is not null)
@@ -85,6 +87,16 @@ internal class Overlay : IDisposable
 
 		browserSettings.Dispose();
 		windowInfo.Dispose();
+
+		_paintWatchTimer = new Timer(_ =>
+		{
+			long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+			if (now - RenderHandler.LastPaintTime > 5000)
+			{
+				Console.WriteLine($"Overlay {_id}: no paint for 5s, reloading");
+				_browser?.Reload();
+			}
+		}, null, 2000, 2000);
 	}
 
 	public void InjectUserCss(string css)
