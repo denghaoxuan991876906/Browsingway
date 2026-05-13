@@ -186,12 +186,11 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 	public void OnAcceleratedPaint(PaintElementType type, Rect dirtyRect, AcceleratedPaintInfo acceleratedPaintInfo)
 	{
+		IntPtr cefHandle = acceleratedPaintInfo.SharedTextureHandle;
+		if (cefHandle == IntPtr.Zero) return;
+
 		lock (_renderLock)
 		{
-			IntPtr cefHandle = acceleratedPaintInfo.SharedTextureHandle;
-
-			// CEF manages a texture pool — handle may differ every frame.
-			// Must open and release within this callback; do NOT cache.
 			ID3D11Texture2D* cefTexture = null;
 			try
 			{
@@ -217,12 +216,15 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 
 				context->Release();
 			}
+			catch (Exception ex)
+			{
+				Console.Error.WriteLine($"OnAcceleratedPaint({type}) failed: {ex.Message} (handle=0x{cefHandle:X})");
+			}
 			finally
 			{
 				if (cefTexture != null) cefTexture->Release();
 			}
 
-			// Clean up any obsolete textures
 			ConcurrentBag<IntPtr> textures = _obsoleteTextures;
 			_obsoleteTextures = new ConcurrentBag<IntPtr>();
 			foreach (IntPtr texPtr in textures)
