@@ -20,6 +20,7 @@ internal static class CefHandler
 		};
 		RootCachePath = settings.RootCachePath;
 		settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
+		settings.CefCommandLineArgs["disable-background-networking"] = "1";
 		if (Environment.IsPrivilegedProcess)
 		{
 			Console.Error.WriteLine(
