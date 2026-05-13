@@ -19,6 +19,7 @@ internal class Overlay : IDisposable
 
 	private bool _mouseInWindow;
 	private Timer? _reloadTimer;
+	private long _lastReloadTime;
 
 	private bool _resizing;
 	private Vector2 _size;
@@ -54,9 +55,13 @@ internal class Overlay : IDisposable
 
 	public void Reload()
 	{
+		long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		if (now - _lastReloadTime < 3000) return; // debounce 3s
+
 		_reloadTimer?.Dispose();
 		_reloadTimer = new Timer(_ =>
 		{
+			_lastReloadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 			_ = _renderProcess.Rpc?.Navigate(RenderGuid, _overlayConfig.Url);
 		}, null, 500, Timeout.Infinite);
 	}
