@@ -14,8 +14,13 @@ internal unsafe class TextureRenderHandler : IRenderHandler
 {
 	private const byte _bytesPerPixel = 4;
 
-	private long _lastPaintTime;
+	private long _lastPaintTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 	public long LastPaintTime => _lastPaintTime;
+
+	public void ResetPaintTime()
+	{
+		_lastPaintTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+	}
 
 	private readonly object _lock = new();
 

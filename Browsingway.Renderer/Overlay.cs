@@ -91,9 +91,11 @@ internal class Overlay : IDisposable
 		_paintWatchTimer = new Timer(_ =>
 		{
 			long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-			if (now - RenderHandler.LastPaintTime > 5000)
+			long since = now - RenderHandler.LastPaintTime;
+			if (since > 5000)
 			{
-				Console.WriteLine($"Overlay {_id}: no paint for 5s, reloading");
+				Console.WriteLine($"[PaintWatch] {_id}: no paint for {since}ms, reloading");
+				RenderHandler.ResetPaintTime();
 				_browser?.Reload();
 			}
 		}, null, 2000, 2000);
