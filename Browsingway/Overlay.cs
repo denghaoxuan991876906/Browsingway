@@ -18,7 +18,6 @@ internal class Overlay : IDisposable
 	private Vector2? _position;
 
 	private bool _mouseInWindow;
-	private int _refreshCount;
 
 	private bool _resizing;
 	private Vector2 _size;
@@ -52,9 +51,9 @@ internal class Overlay : IDisposable
 		_position = x.HasValue && y.HasValue ? new Vector2(x.Value, y.Value) : null;
 	}
 
-	public void Refresh()
+	public void Reload()
 	{
-		_refreshCount = 10;
+		_ = _renderProcess.Rpc?.Navigate(RenderGuid, _overlayConfig.Url);
 	}
 
 	public void Dispose()
@@ -162,12 +161,6 @@ internal class Overlay : IDisposable
 		}
 
 		HandleWindowSize();
-
-		if (_refreshCount > 0)
-		{
-			_ = _renderProcess.Rpc?.ResizeOverlay(RenderGuid, Math.Max(1, _overlayConfig.Width), Math.Max(1, _overlayConfig.Height));
-			_refreshCount--;
-		}
 
 		// TODO: Browsingway.Renderer can take some time to spin up properly, should add a loading state.
 		if (_textureHandler != null && !_hasRenderError)
